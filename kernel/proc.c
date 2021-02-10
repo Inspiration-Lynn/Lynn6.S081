@@ -295,6 +295,9 @@ fork(void)
 
   np->state = RUNNABLE;
 
+  //trace
+  np->mask = p->mask;
+
   release(&np->lock);
 
   return pid;
@@ -692,4 +695,19 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+// lab2:sysinfo
+// collect the number of processes
+int 
+process_cnt()
+{
+  int cnt = 0;
+  struct proc *p;
+
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state != UNUSED)
+      cnt++;
+  }
+  return cnt;
 }

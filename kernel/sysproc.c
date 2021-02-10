@@ -1,3 +1,6 @@
+//系统调用的真正实现
+//add the real implementation of your method here
+
 #include "types.h"
 #include "riscv.h"
 #include "defs.h"
@@ -6,6 +9,8 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+//lab2: sysinfo
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -94,4 +99,35 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_trace(void)
+{
+  int n;   //trace argument eg:2(b10) 32(b10000)
+  if(argint(0, &n) < 0)
+    return -1;
+  myproc()->mask = n;
+  return 0;
+}
+
+uint64
+sys_sysinfo(void)
+{
+  struct sysinfo systemInfo;
+  uint64 addr;    // user pointer to struct sysinfo
+  struct proc *p = myproc();
+
+  if(argaddr(0, &addr) < 0)   // user mode pass argument: struct sysinfo*(to receive return value from kernel)
+    return -1;
+  systemInfo.freemem = freemem_cnt();    // amount of free memory (bytes)
+  systemInfo.nproc = process_cnt();      // number of process
+
+  // copy a struct sysinfo back to user space
+  // Copy len bytes from src to virtual address dstva in a given page table.
+  // Return 0 on success, -1 on error.
+  // int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
+  if(copyout(p->pagetable, addr, (char *)&systemInfo, sizeof(systemInfo)) < 0)
+    return -1;
+  return 0;
 }
